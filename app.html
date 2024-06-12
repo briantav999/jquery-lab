@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Clicker</title>
+</head>
+<body>
+    <div id="text-output"></div>
+    <div id="screen"></div>
+    <button id="button">Get a Cookie</button>
+    <ul id="cookie-list"></ul>
+    <div id="player-hp"></div>
+    <div id="output"></div>
+    <button id="consumer">Consume Cookie</button>
+
+    <audio id="crunch-sound" src="crunch-sound.mp3"></audio>
+    <audio id="ding-sound" src="ding-sound.mp3"></audio>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const outputTextElement = $('#text-output');
+            const outputScreenElement = $('#screen');
+            const buttonElement = $('#button');
+            const invCookies = $('#cookie-list');
+            const playerHpElement = $('#player-hp');
+            const outputElement = $('#output');
+            const consumeElement = $('#consumer');
+            const cookiesAvailable = ['chocolate', 'oatmeal', 'macademia', 'vanilla', 'chocolatechip'];
+            const cookieImages = {
+                chocolate: "https://media.istockphoto.com/id/1046582724/photo/close-up-image-of-soft-baked-dark-chocolate-cookies.jpg?s=612x612&w=0&k=20&c=jeP79ypxgj3s7oiMpdrHFpShzUMAJemxh9Je2LzfMKA=",
+                vanilla: "https://media.istockphoto.com/id/1270135720/photo/vanilla-wafer-stack.jpg?s=1024x1024&w=is&k=20&c=9U4ZL3J6M9sg2Dd7XLKzVV8n1WsbLGztx7lcArBMsOw=",
+                oatmeal: "https://media.istockphoto.com/id/1089728238/photo/oatmeal-cookies-with-glass-of-milk.jpg?s=612x612&w=0&k=20&c=TrtPGRyDrUBaw21iae_YhqYro9zdARDnlpuv7KPb6-I=",
+                chocolatechip: "https://media.istockphoto.com/id/517109442/photo/chocolate-chip-cookie-isolated.jpg?s=612x612&w=0&k=20&c=RgZOYwzVRTXnIBy8zSkXK-wJfNBy9w023UGULkbH_VE=",
+                macademia: "https://media.istockphoto.com/id/175535621/photo/macadamia-nut-and-white-chocolate-cookies.jpg?s=612x612&w=0&k=20&c=Sujp59JmfNkjHGUgQ3iIBGwhQk3TejJJyvfyA3vPznY="
+            };
+            const player = {
+                hp: 3,
+                inventory: [],
+            };
+            let firstTurn = true;
+            let hasConsumedCookie = false;
+
+            function consumeCookie() {
+                if (player.inventory.length === 0) {
+                    outputTextElement.html("You don't have any cookies to consume!");
+                } else if (hasConsumedCookie) {
+                    outputTextElement.html("You've already consumed a cookie this turn!");
+                } else if (player.inventory[player.inventory.length - 1] === 'macademia') {
+                    outputTextElement.html("You cannot consume a macadamia cookie!");
+                } else {
+                    const consumedCookie = player.inventory.pop();
+                    invCookies.children().last().remove();
+                    const crunchSound = $('#crunch-sound')[0];
+                    crunchSound.play();
+                    player.hp++;
+                    playerHpElement.text(`HP: ${player.hp}`);
+                    outputTextElement.html(`You consumed a ${consumedCookie} cookie!`);
+                    hasConsumedCookie = true;
+                }
+                firstTurn = false;
+            }
+
+            consumeElement.on("click", consumeCookie);
+
+            function randomCookie() {
+                const randomIndex = Math.floor(Math.random() * cookiesAvailable.length);
+                return cookiesAvailable[randomIndex];
+            }
+
+            function clickHandler() {
+                if (outputTextElement.html().includes('You got a Cookie!') && (player.hp > 0)) {
+                    outputTextElement.html("try again!");
+                } else if (player.hp <= 0) {
+                    player.hp = 0;
+                    outputTextElement.html(`Oh no!<br><br>You lost!!`);
+                } else if (outputTextElement.html().includes("Oh no!") || (outputTextElement.html().includes('Congratulations!'))) {
+
+                } else {
+                    const cookie = randomCookie();
+                    const img = $('<img>').attr('src', cookieImages[cookie]);
+                    outputTextElement.html(`You got a Cookie!<br><br>${cookie}`);
+                    outputTextElement.append(img);
+
+                    const dingSound = $('#ding-sound')[0];
+                    dingSound.play();
+
+                    addToInventory(cookie);
+                }
+
+                if (checkSameCookieCount(player.inventory) >= 3) {
+                    outputTextElement.html(`Congratulations!<br><br>You won!!`);
+                }
+            }
+
+            function addToInventory(cookie) {
+                player.inventory.push(cookie);
+                const listItem = $('<li>').html(cookie);
+                invCookies.append(listItem);
+                if (cookie === 'macademia') {
+                    player.hp--;
+                    playerHpElement.text(`HP: ${player.hp}`);
+                }
+                hasConsumedCookie = false;
+            }
+
+            function checkSameCookieCount(inventory) {
+                const cookieCounts = {};
+                let maxCount = 0;
+
+                for (const cookie of inventory) {
+                    cookieCounts[cookie] = (cookieCounts[cookie] || 0) + 1;
+                    maxCount = Math.max(maxCount, cookieCounts[cookie]);
+                }
+
+                return maxCount;
+            }
+
+            buttonElement.on('click', clickHandler);
+        });
+    </script>
+</body>
+</html>
